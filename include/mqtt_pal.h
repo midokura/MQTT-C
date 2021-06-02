@@ -173,6 +173,9 @@ extern "C" {
             #define mqtt_pal_sendall mqtt_pal_tcp_sendall
             #define mqtt_pal_recvall mqtt_pal_tcp_recvall
         #endif
+    #else
+        struct mqtt_pal_socket;
+        typedef struct mqtt_pal_socket *mqtt_pal_socket_handle;
     #endif
 #elif defined(_MSC_VER)
     #include <limits.h>
@@ -204,6 +207,9 @@ extern "C" {
             #define mqtt_pal_sendall mqtt_pal_tcp_sendall
             #define mqtt_pal_recvall mqtt_pal_tcp_recvall
         #endif
+    #else
+        struct mqtt_pal_socket;
+        typedef struct mqtt_pal_socket *mqtt_pal_socket_handle;
     #endif
 
 #endif
