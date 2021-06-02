@@ -67,6 +67,16 @@ extern "C" {
  * for sending and receiving data using the platforms socket calls.
  */
 
+#if defined(__unix__) || defined(__APPLE__) || defined(__NuttX__)
+    #if !defined(MQTT_USE_MBEDTLS) && !defined(MQTT_USE_WOLFSSL) && !defined(MQTT_USE_BIO) && !defined(MQTT_USE_BEARSSL)
+        #define MQTT_USE_TCP
+    #endif
+#elif defined(_MSC_VER)
+    #if !defined(MQTT_USE_BIO)
+        #define MQTT_USE_TCP
+    #endif
+#endif
+
 #if defined(MQTT_USE_MBEDTLS)
     #include <unistd.h>
     struct mbedtls_ssl_context;
