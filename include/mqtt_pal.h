@@ -75,7 +75,7 @@ extern "C" {
     ssize_t mqtt_pal_mbedtls_recvall(mqtt_pal_mbedtls_socket_handle fd, void* buf, size_t bufsz, int flags);
 #endif
 
-#if defined(MQTT_PAL_USE_WOLFSSL)
+#if defined(MQTT_USE_WOLFSSL)
     #include <wolfssl/ssl.h>
     typedef WOLFSSL* mqtt_pal_wolfssl_socket_handle;
 
@@ -83,7 +83,7 @@ extern "C" {
     ssize_t mqtt_pal_wolfssl_recvall(mqtt_pal_wolfssl_socket_handle fd, void* buf, size_t bufsz, int flags);
 #endif
 
-#if defined(MQTT_PAL_USE_BIO)
+#if defined(MQTT_USE_BIO)
     #include <openssl/bio.h>
     typedef BIO* mqtt_pal_bio_socket_handle;
 
@@ -91,7 +91,7 @@ extern "C" {
     ssize_t mqtt_pal_bio_recvall(mqtt_pal_bio_socket_handle fd, void* buf, size_t bufsz, int flags);
 #endif
 
-#if defined(MQTT_PAL_USE_BEARSSL)
+#if defined(MQTT_USE_BEARSSL)
     #include <bearssl.h>
 
     typedef struct _bearssl_context {
@@ -111,7 +111,7 @@ extern "C" {
     ssize_t mqtt_pal_bearssl_recvall(mqtt_pal_bearssl_socket_handle fd, void* buf, size_t bufsz, int flags);
 #endif
 
-#if defined(MQTT_PAL_USE_TCP)
+#if defined(MQTT_USE_TCP)
     typedef int mqtt_pal_tcp_socket_handle;
 
     ssize_t mqtt_pal_tcp_sendall(mqtt_pal_tcp_socket_handle fd, const void* buf, size_t len, int flags);
