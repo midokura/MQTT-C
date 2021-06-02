@@ -32,7 +32,7 @@ SOFTWARE.
  */
 
 
-#ifdef MQTT_PAL_ENABLE_MBEDTLS
+#ifdef MQTT_USE_MBEDTLS
 #include <mbedtls/ssl.h>
 
 ssize_t mqtt_pal_mbedtls_sendall(mqtt_pal_mbedtls_socket_handle fd, const void* buf, size_t len, int flags) {
@@ -101,7 +101,7 @@ ssize_t mqtt_pal_mbedtls_recvall(mqtt_pal_mbedtls_socket_handle fd, void* buf, s
 
 #endif
 
-#if defined(MQTT_PAL_ENABLE_WOLFSSL)
+#if defined(MQTT_USE_WOLFSSL)
 #include <wolfssl/ssl.h>
 
 ssize_t mqtt_pal_wolfssl_sendall(mqtt_pal_wolfssl_socket_handle fd, const void* buf, size_t len, int flags) {
@@ -141,7 +141,7 @@ ssize_t mqtt_pal_wolfssl_recvall(mqtt_pal_wolfssl_socket_handle fd, void* buf, s
 
 #endif
 
-#if defined(MQTT_PAL_ENABLE_BEARSSL)
+#if defined(MQTT_USE_BEARSSL)
 #include <bearssl.h>
 #include <memory.h>
 
@@ -272,7 +272,7 @@ ssize_t mqtt_pal_bearssl_recvall(mqtt_pal_bearssl_socket_handle fd, void* buf, s
 
 #endif
 
-#if defined(MQTT_PAL_ENABLE_BIO)
+#if defined(MQTT_USE_BIO)
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -312,7 +312,7 @@ ssize_t mqtt_pal_bio_recvall(mqtt_pal_bio_socket_handle fd, void* buf, size_t bu
 
 #endif
 
-#if defined(MQTT_PAL_ENABLE_TCP)
+#if defined(MQTT_USE_TCP)
 
 #if defined(__unix__) || defined(__APPLE__) || defined(__NuttX__)
 
