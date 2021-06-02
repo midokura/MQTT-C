@@ -68,6 +68,7 @@ extern "C" {
  */
 
 #if defined(MQTT_USE_MBEDTLS)
+    #include <unistd.h>
     struct mbedtls_ssl_context;
     typedef struct mbedtls_ssl_context *mqtt_pal_mbedtls_socket_handle;
 
@@ -112,6 +113,7 @@ extern "C" {
 #endif
 
 #if defined(MQTT_USE_TCP)
+    #include <unistd.h>
     typedef int mqtt_pal_tcp_socket_handle;
 
     ssize_t mqtt_pal_tcp_sendall(mqtt_pal_tcp_socket_handle fd, const void* buf, size_t len, int flags);
