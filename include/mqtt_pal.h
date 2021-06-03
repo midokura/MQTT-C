@@ -67,15 +67,92 @@ extern "C" {
  * for sending and receiving data using the platforms socket calls.
  */
 
+/* UNIX-like platform support */
 #if defined(__unix__) || defined(__APPLE__) || defined(__NuttX__)
-    #if !defined(MQTT_USE_MBEDTLS) && !defined(MQTT_USE_WOLFSSL) && !defined(MQTT_USE_BIO) && !defined(MQTT_USE_BEARSSL)
-        #define MQTT_USE_TCP
+    #include <limits.h>
+    #include <string.h>
+    #include <stdarg.h>
+    #include <time.h>
+    #include <arpa/inet.h>
+    #include <pthread.h>
+
+    #define MQTT_PAL_HTONS(s) htons(s)
+    #define MQTT_PAL_NTOHS(s) ntohs(s)
+
+    #define MQTT_PAL_TIME() time(NULL)
+
+    typedef time_t mqtt_pal_time_t;
+    typedef pthread_mutex_t mqtt_pal_mutex_t;
+
+    #define MQTT_PAL_MUTEX_INIT(mtx_ptr) pthread_mutex_init(mtx_ptr, NULL)
+    #define MQTT_PAL_MUTEX_LOCK(mtx_ptr) pthread_mutex_lock(mtx_ptr)
+    #define MQTT_PAL_MUTEX_UNLOCK(mtx_ptr) pthread_mutex_unlock(mtx_ptr)
+
+    #ifndef MQTT_USE_CUSTOM_SOCKET_HANDLE
+        #ifdef MQTT_USE_MBEDTLS
+            #define mqtt_pal_socket_handle mqtt_pal_mbedtls_socket_handle
+            #define mqtt_pal_sendall mqtt_pal_mbedtls_sendall
+            #define mqtt_pal_recvall mqtt_pal_mbedtls_recvall
+        #elif defined(MQTT_USE_WOLFSSL)
+            #define mqtt_pal_socket_handle mqtt_pal_wolfssl_socket_handle
+            #define mqtt_pal_sendall mqtt_pal_wolfssl_sendall
+            #define mqtt_pal_recvall mqtt_pal_wolfssl_recvall
+        #elif defined(MQTT_USE_BIO)
+            #define mqtt_pal_socket_handle mqtt_pal_bio_socket_handle
+            #define mqtt_pal_sendall mqtt_pal_bio_sendall
+            #define mqtt_pal_recvall mqtt_pal_bio_recvall
+        #elif defined(MQTT_USE_BEARSSL)
+            #define mqtt_pal_socket_handle mqtt_pal_bearssl_socket_handle
+            #define mqtt_pal_sendall mqtt_pal_bearssl_sendall
+            #define mqtt_pal_recvall mqtt_pal_bearssl_recvall
+        #else
+            #define MQTT_USE_TCP
+            #define mqtt_pal_socket_handle mqtt_pal_tcp_socket_handle
+            #define mqtt_pal_sendall mqtt_pal_tcp_sendall
+            #define mqtt_pal_recvall mqtt_pal_tcp_recvall
+        #endif
+    #else
+        struct mqtt_pal_socket;
+        typedef struct mqtt_pal_socket *mqtt_pal_socket_handle;
     #endif
 #elif defined(_MSC_VER)
-    #if !defined(MQTT_USE_BIO)
-        #define MQTT_USE_TCP
+    #include <limits.h>
+    #include <winsock2.h>
+    #include <windows.h>
+    #include <time.h>
+    #include <stdint.h>
+
+    typedef SSIZE_T ssize_t;
+    #define MQTT_PAL_HTONS(s) htons(s)
+    #define MQTT_PAL_NTOHS(s) ntohs(s)
+
+    #define MQTT_PAL_TIME() time(NULL)
+
+    typedef time_t mqtt_pal_time_t;
+    typedef CRITICAL_SECTION mqtt_pal_mutex_t;
+
+    #define MQTT_PAL_MUTEX_INIT(mtx_ptr) InitializeCriticalSection(mtx_ptr)
+    #define MQTT_PAL_MUTEX_LOCK(mtx_ptr) EnterCriticalSection(mtx_ptr)
+    #define MQTT_PAL_MUTEX_UNLOCK(mtx_ptr) LeaveCriticalSection(mtx_ptr)
+
+    #ifndef MQTT_USE_CUSTOM_SOCKET_HANDLE
+        #ifdef MQTT_USE_BIO
+            #define mqtt_pal_socket_handle mqtt_pal_bio_socket_handle
+            #define mqtt_pal_sendall mqtt_pal_bio_sendall
+            #define mqtt_pal_recvall mqtt_pal_bio_recvall
+        #else
+            #define MQTT_USE_TCP
+            #define mqtt_pal_socket_handle mqtt_pal_tcp_socket_handle
+            #define mqtt_pal_sendall mqtt_pal_tcp_sendall
+            #define mqtt_pal_recvall mqtt_pal_tcp_recvall
+        #endif
+    #else
+        struct mqtt_pal_socket;
+        typedef struct mqtt_pal_socket *mqtt_pal_socket_handle;
     #endif
+
 #endif
+
 
 #if defined(MQTT_USE_MBEDTLS)
     #include <unistd.h>
@@ -128,90 +205,6 @@ extern "C" {
 
     ssize_t mqtt_pal_tcp_sendall(mqtt_pal_tcp_socket_handle fd, const void* buf, size_t len, int flags);
     ssize_t mqtt_pal_tcp_recvall(mqtt_pal_tcp_socket_handle fd, void* buf, size_t bufsz, int flags);
-#endif
-
-/* UNIX-like platform support */
-#if defined(__unix__) || defined(__APPLE__) || defined(__NuttX__)
-    #include <limits.h>
-    #include <string.h>
-    #include <stdarg.h>
-    #include <time.h>
-    #include <arpa/inet.h>
-    #include <pthread.h>
-
-    #define MQTT_PAL_HTONS(s) htons(s)
-    #define MQTT_PAL_NTOHS(s) ntohs(s)
-
-    #define MQTT_PAL_TIME() time(NULL)
-
-    typedef time_t mqtt_pal_time_t;
-    typedef pthread_mutex_t mqtt_pal_mutex_t;
-
-    #define MQTT_PAL_MUTEX_INIT(mtx_ptr) pthread_mutex_init(mtx_ptr, NULL)
-    #define MQTT_PAL_MUTEX_LOCK(mtx_ptr) pthread_mutex_lock(mtx_ptr)
-    #define MQTT_PAL_MUTEX_UNLOCK(mtx_ptr) pthread_mutex_unlock(mtx_ptr)
-
-    #ifndef MQTT_USE_CUSTOM_SOCKET_HANDLE
-        #ifdef MQTT_USE_MBEDTLS
-            #define mqtt_pal_socket_handle mqtt_pal_mbedtls_socket_handle
-            #define mqtt_pal_sendall mqtt_pal_mbedtls_sendall
-            #define mqtt_pal_recvall mqtt_pal_mbedtls_recvall
-        #elif defined(MQTT_USE_WOLFSSL)
-            #define mqtt_pal_socket_handle mqtt_pal_wolfssl_socket_handle
-            #define mqtt_pal_sendall mqtt_pal_wolfssl_sendall
-            #define mqtt_pal_recvall mqtt_pal_wolfssl_recvall
-        #elif defined(MQTT_USE_BIO)
-            #define mqtt_pal_socket_handle mqtt_pal_bio_socket_handle
-            #define mqtt_pal_sendall mqtt_pal_bio_sendall
-            #define mqtt_pal_recvall mqtt_pal_bio_recvall
-        #elif defined(MQTT_USE_BEARSSL)
-            #define mqtt_pal_socket_handle mqtt_pal_bearssl_socket_handle
-            #define mqtt_pal_sendall mqtt_pal_bearssl_sendall
-            #define mqtt_pal_recvall mqtt_pal_bearssl_recvall
-        #else
-            #define mqtt_pal_socket_handle mqtt_pal_tcp_socket_handle
-            #define mqtt_pal_sendall mqtt_pal_tcp_sendall
-            #define mqtt_pal_recvall mqtt_pal_tcp_recvall
-        #endif
-    #else
-        struct mqtt_pal_socket;
-        typedef struct mqtt_pal_socket *mqtt_pal_socket_handle;
-    #endif
-#elif defined(_MSC_VER)
-    #include <limits.h>
-    #include <winsock2.h>
-    #include <windows.h>
-    #include <time.h>
-    #include <stdint.h>
-
-    typedef SSIZE_T ssize_t;
-    #define MQTT_PAL_HTONS(s) htons(s)
-    #define MQTT_PAL_NTOHS(s) ntohs(s)
-
-    #define MQTT_PAL_TIME() time(NULL)
-
-    typedef time_t mqtt_pal_time_t;
-    typedef CRITICAL_SECTION mqtt_pal_mutex_t;
-
-    #define MQTT_PAL_MUTEX_INIT(mtx_ptr) InitializeCriticalSection(mtx_ptr)
-    #define MQTT_PAL_MUTEX_LOCK(mtx_ptr) EnterCriticalSection(mtx_ptr)
-    #define MQTT_PAL_MUTEX_UNLOCK(mtx_ptr) LeaveCriticalSection(mtx_ptr)
-
-    #ifndef MQTT_USE_CUSTOM_SOCKET_HANDLE
-        #ifdef MQTT_USE_BIO
-            #define mqtt_pal_socket_handle mqtt_pal_bio_socket_handle
-            #define mqtt_pal_sendall mqtt_pal_bio_sendall
-            #define mqtt_pal_recvall mqtt_pal_bio_recvall
-        #else
-            #define mqtt_pal_socket_handle mqtt_pal_tcp_socket_handle
-            #define mqtt_pal_sendall mqtt_pal_tcp_sendall
-            #define mqtt_pal_recvall mqtt_pal_tcp_recvall
-        #endif
-    #else
-        struct mqtt_pal_socket;
-        typedef struct mqtt_pal_socket *mqtt_pal_socket_handle;
-    #endif
-
 #endif
 
 /**
